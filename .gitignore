@@ -1,6 +1,6 @@
 # Cache objects
 packer_cache/
-output-qemu/
+output-debian/
 
 # For built boxes
 *.box
