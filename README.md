@@ -18,10 +18,10 @@ The image is created with everything required to use the provided VM as a Kubern
 
 Commands to create an automated VM image:
 
-To create a Debian 11 VM image using VMware Workstation use the following commands:
+To create a Debian VM image use the following command:
 
-```cmd
-packer build  debian.json
+```bash
+packer build debian.json
 ```
 
 ## Customizing
