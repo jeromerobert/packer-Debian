@@ -1,17 +1,18 @@
-# packer-Debian11
+# packer-kubernetes-debian
 
-## What is packer-Debian11 ?
+packer-kubernetes-debian is a set of configuration files used to build an automated Debian 12 virtual machine images using [Packer](https://www.packer.io/).
 
-packer-Debian11 is a set of configuration files used to build an automated Debian 11 virtual machine images using [Packer](https://www.packer.io/).
-This Packer configuration file allows you to build images for VMware Workstation and Oracle VM VirtualBox.
+This repository was forked from https://github.com/eaksel/packer-Debian11 and heavily modified:
+1. Uses Debian cloud images instead of an installation iso file
+1. Uses cloud-init instead of ansible
+
+The image is created with everything required to use the provided VM as a Kubernetes node. 
 
 ## Prerequisites
 
 * [Packer](https://www.packer.io/downloads.html)
   * <https://www.packer.io/intro/getting-started/install.html>
-* A Hypervisor
-  * [VMware Workstation](https://www.vmware.com/products/workstation-pro.html)
-  * [Oracle VM VirtualBox](https://www.virtualbox.org/)
+* A working Qemu installation with the kvm accellerator.
 
 ## How to use Packer
 
@@ -20,38 +21,16 @@ Commands to create an automated VM image:
 To create a Debian 11 VM image using VMware Workstation use the following commands:
 
 ```cmd
-cd c:\packer-Debian11
-packer build -only=vmware-iso debian11.json
-packer build -only=vmware-iso debian11_uefi.json
+packer build  debian.json
 ```
 
-To create a Debian 11 VM image using Oracle VM VirtualBox use the following commands:
+## Customizing
 
-```cmd
-cd c:\packer-Debian11
-packer build -only=virtualbox-iso debian11.json
-packer build -only=virtualbox-iso debian11_uefi.json
-```
+By default the vm is based on daily cloud images from Debian. The latest daily image is configured. This can be changed in the variables section in `debian.json`
 
-*If you omit the keyword "-only=" both the Workstation and Virtualbox VMs will be created.*
-
-By default the .iso of Debian 11 is pulled from <https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-11.0.0-amd64-netinst.iso>
-
-You can change the URL to one closer to your build server. To do so change the **"iso_url"** parameter in the **"variables"** section of the debian9.json file.
-
-```json
-{
-  "variables": {
-      "iso_url": "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.0.0-amd64-netinst.iso"
-  }
-}
-```
 
 ## Default credentials
 
-The default credentials for this VM image are:
+There are no default credentials for the default `debian` user. Use cloud-init to provide an ssh authorized key to be able to log in.
 
-|Username|Password|
-|--------|--------|
-|packer|packer|
-|root|packer|
+
