@@ -26,9 +26,9 @@ packages:
 - curl
 - containerd
 - man-db
-- kubectl
-- kubelet
-- kubeadm
+- kubectl=${kubernetes_version}
+- kubelet=${kubernetes_version}
+- kubeadm=${kubernetes_version}
 - jq
 - vim-nox
 - qemu-guest-agent

@@ -1,4 +1,9 @@
 
+variable "kubernetes_version" {
+   type = string
+   default = "1.27.2-00"
+}
+
 variable "boot_wait" {
   type    = string
   default = "5s"
@@ -43,7 +48,10 @@ source "qemu" "debian" {
   disk_size        = "${var.disk_size}"
   format           = "qcow2"
   headless         = "${var.headless}"
-  http_directory   = "http"
+  http_content     = {
+     "/cloud-init/user-data" = templatefile("${path.root}/http/cloud-init/user-data", { kubernetes_version = "${var.kubernetes_version}" } )
+     "/cloud-init/meta-data" = file("http/cloud-init/meta-data")
+  }
   iso_checksum     = "file:${var.iso_base_url}/SHA512SUMS"
   iso_url          = "${var.iso_base_url}/${var.image_name}"
   net_device       = "virtio-net"

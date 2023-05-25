@@ -3,6 +3,12 @@
 # Wait for cloud-init to be done
 echo "Waiting for cloud-init to finish"
 cloud-init status --wait
+STATUS=$(cloud-init status --format=json | jq -r .status)
+if [ "$STATUS" != "done" ]; then
+    echo FAILED to run cloud-init successfully.
+    cat /var/log/cloud-init.log
+    exit 1
+fi
 
 # Make sure to prevent kubernetes packages from updating in this image.
 apt-mark hold kubelet kubeadm kubectl
