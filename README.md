@@ -26,7 +26,9 @@ packer build debian.pkr.hcl
 
 ## Customizing
 
-By default the vm is based on daily cloud images from Debian. The latest daily image is configured. This can be changed in the variables section in `debian.pkr.hcl`
+By default the vm is based on daily cloud images from Debian. The latest daily image is configured. This can be changed in the variables section in `debian.pkr.hcl`.
+
+The Kubernetes version installed for `kubectl`, `kubeadm`, and `kubelet` is also configurable in the variable section in `debian.pkr.hcl`.
 
 
 ## Default credentials
