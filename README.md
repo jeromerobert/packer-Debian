@@ -35,4 +35,35 @@ The Kubernetes version installed for `kubectl`, `kubeadm`, and `kubelet` is also
 
 There are no default credentials for the default `debian` user. Use cloud-init to provide an ssh authorized key to be able to log in.
 
+# Use in Proxmox
 
+Create a template VM that can be cloned to create actual VMs.
+
+1. Create a VM with only a cloudinit disk
+   ```bash
+      qm create $VMID -agent enabled=1 -cpu host -memory 4096 \
+                      -name kubetemplate -net0 model=virtio,bridge=vmbr0 \
+                      -scsihw virtio-scsi-single \
+                      -ide0 $CLOUD_INIT_STORAGE:vm-$VMID-cloudinit.qcow2,media=cdrom \
+                      -ostype l26 -serial0 \
+                      -rng0 source=/dev/hwrng
+   ```
+1. Copy to built image (`$IMAGE`) to one of the Proxmox cluster nodes
+1. Import the image into Proxmox and assign it as a disk to the target VM
+   ```bash
+      qm disk import $VMID $IMAGE $STORAGE_NAME
+   ```
+1. Update the VM to attach the newly imported disk to the correct hardware. Virtio works best, but SATA or SCSI are also fine.
+   ```bash
+      qm set $VMID -virtio0 $STORAGE_NAME:vm-$VMID-disk-0
+   ```
+1. Update the VM's boot order
+   ```bash
+      qm set $VMID -boot order=virtio0;net0
+   ```
+1. Transform the new VM into a template VM
+   ```bash
+      qm template $VMID
+   ```
+
+This template can be cloned to create a runnable VM. Use `cloudinit` to set the new VM's network information and an SSH key for the default `debian` user.

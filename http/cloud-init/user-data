@@ -18,6 +18,16 @@ write_files:
   content: dmVyc2lvbiA9IDIKW3BsdWdpbnNdCiAgW3BsdWdpbnMuImlvLmNvbnRhaW5lcmQuZ3JwYy52MS5jcmkiXQogICBbcGx1Z2lucy4iaW8uY29udGFpbmVyZC5ncnBjLnYxLmNyaSIuY29udGFpbmVyZF0KICAgICAgW3BsdWdpbnMuImlvLmNvbnRhaW5lcmQuZ3JwYy52MS5jcmkiLmNvbnRhaW5lcmQucnVudGltZXNdCiAgICAgICAgW3BsdWdpbnMuImlvLmNvbnRhaW5lcmQuZ3JwYy52MS5jcmkiLmNvbnRhaW5lcmQucnVudGltZXMucnVuY10KICAgICAgICAgIHJ1bnRpbWVfdHlwZSA9ICJpby5jb250YWluZXJkLnJ1bmMudjIiCiAgICAgICAgICBbcGx1Z2lucy4iaW8uY29udGFpbmVyZC5ncnBjLnYxLmNyaSIuY29udGFpbmVyZC5ydW50aW1lcy5ydW5jLm9wdGlvbnNdCiAgICAgICAgICAgIFN5c3RlbWRDZ3JvdXAgPSB0cnVlCg==
   path: /etc/containerd/config.toml
   permissions: '0644'
+- encoding: b64
+  content: YnJfbmV0ZmlsdGVyCg==
+  # Needed to allow kubeadm to not complain on initialization
+  path: /etc/modprobe.d/netfilter.conf
+  permissions: '0644'
+- encoding: b64
+  content: bmV0LmlwdjQuaXBfZm9yd2FyZD0xCg==
+  # Needed to allow the node to forward traffic to other nodes
+  path: /etc/sysctl.d/ipforward.conf
+  permissions: '0644'
 apt:
   sources:
     kubernetes:
