@@ -1,7 +1,7 @@
 
 variable "kubernetes_version" {
    type = string
-   default = "1.27.3-00"
+   default = "1.27.4-00"
 }
 
 variable "boot_wait" {

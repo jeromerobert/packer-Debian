@@ -44,8 +44,7 @@ Create a template VM that can be cloned to create actual VMs.
       qm create $VMID -agent enabled=1 -cpu host -memory 4096 \
                       -name kubetemplate -net0 model=virtio,bridge=vmbr0 \
                       -scsihw virtio-scsi-single \
-                      -ide0 $CLOUD_INIT_STORAGE:vm-$VMID-cloudinit.qcow2,media=cdrom \
-                      -ostype l26 -serial0 \
+                      -ostype l26 -serial0 socket \
                       -rng0 source=/dev/hwrng
    ```
 1. Copy to built image (`$IMAGE`) to one of the Proxmox cluster nodes
@@ -56,6 +55,10 @@ Create a template VM that can be cloned to create actual VMs.
 1. Update the VM to attach the newly imported disk to the correct hardware. Virtio works best, but SATA or SCSI are also fine.
    ```bash
       qm set $VMID -virtio0 $STORAGE_NAME:vm-$VMID-disk-0
+   ```
+1. Add cloud-init to the vm
+   ```bash
+      qm set $VMID --ide2 $STORAGE_NAME:cloudinit
    ```
 1. Update the VM's boot order
    ```bash
