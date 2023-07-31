@@ -21,7 +21,7 @@ write_files:
 - encoding: b64
   content: YnJfbmV0ZmlsdGVyCg==
   # Needed to allow kubeadm to not complain on initialization
-  path: /etc/modprobe.d/netfilter.conf
+  path: /etc/modules-load.d/netfilter.conf
   permissions: '0644'
 - encoding: b64
   content: bmV0LmlwdjQuaXBfZm9yd2FyZD0xCg==

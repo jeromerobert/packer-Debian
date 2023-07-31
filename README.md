@@ -39,7 +39,7 @@ There are no default credentials for the default `debian` user. Use cloud-init t
 
 Create a template VM that can be cloned to create actual VMs.
 
-1. Create a VM with only a cloudinit disk
+1. Create a VM without any storage
    ```bash
       qm create $VMID -agent enabled=1 -cpu host -memory 4096 \
                       -name kubetemplate -net0 model=virtio,bridge=vmbr0 \
@@ -62,7 +62,7 @@ Create a template VM that can be cloned to create actual VMs.
    ```
 1. Update the VM's boot order
    ```bash
-      qm set $VMID -boot order=virtio0;net0
+      qm set $VMID -boot 'order=virtio0;net0'
    ```
 1. Transform the new VM into a template VM
    ```bash
