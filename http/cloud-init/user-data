@@ -28,6 +28,11 @@ write_files:
   # Needed to allow the node to forward traffic to other nodes
   path: /etc/sysctl.d/ipforward.conf
   permissions: '0644'
+- encoding: b64
+  content: S1VCRUxFVF9FWFRSQV9BUkdTPS0tY2xvdWQtcHJvdmlkZXI9ZXh0ZXJuYWwK
+  # Needed to use an external cloud manager provider
+  path: /etc/default/kubelet
+  permissions: '0644'
 apt:
   sources:
     kubernetes:
