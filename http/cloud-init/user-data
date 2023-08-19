@@ -24,11 +24,6 @@ write_files:
   path: /etc/modules-load.d/netfilter.conf
   permissions: '0644'
 - encoding: b64
-  content: bmV0LmlwdjQudnMuY29ubnRyYWNrPTEK
-  # Needed to allow conntrack to work for ipvs connections
-  path: /etc/sysctl.d/ipvsconntrack.conf
-  permissions: '0644'
-- encoding: b64
   content: bmV0LmlwdjQuaXBfZm9yd2FyZD0xCg==
   # Needed to allow the node to forward traffic to other nodes
   path: /etc/sysctl.d/ipforward.conf
