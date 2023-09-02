@@ -41,8 +41,9 @@ Create a template VM that can be cloned to create actual VMs.
 
 1. Create a VM without any storage
    ```bash
-      qm create $VMID -agent enabled=1 -cpu host -memory 4096 \
-                      -name kubetemplate -net0 model=virtio,bridge=vmbr0 \
+      qm create $VMID -name kubetemplate -agent enabled=1 \
+                      -sockets 2 -cores 2 -cpu host -memory 4096 \
+                      -net0 model=virtio,bridge=vmbr0 \
                       -scsihw virtio-scsi-single \
                       -ostype l26 -serial0 socket \
                       -rng0 source=/dev/hwrng

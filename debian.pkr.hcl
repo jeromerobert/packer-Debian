@@ -1,7 +1,12 @@
 
-variable "kubernetes_version" {
+variable "kubernetes_major" {
+  type = string
+  default = "1"
+}
+
+variable "kubernetes_minor" {
    type = string
-   default = "1.27.4-00"
+   default = "28"
 }
 
 variable "boot_wait" {
@@ -34,11 +39,6 @@ variable "numvcpus" {
   default = "1"
 }
 
-variable "vm_name" {
-  type    = string
-  default = "debian-12-latest.qcow2"
-}
-
 source "qemu" "debian" {
   accelerator      = "kvm"
   boot_wait        = "${var.boot_wait}"
@@ -49,7 +49,7 @@ source "qemu" "debian" {
   format           = "qcow2"
   headless         = "${var.headless}"
   http_content     = {
-     "/cloud-init/user-data" = templatefile("${path.root}/http/cloud-init/user-data", { kubernetes_version = "${var.kubernetes_version}" } )
+     "/cloud-init/user-data" = templatefile("${path.root}/http/cloud-init/user-data", { kubernetes_major = "${var.kubernetes_major}", kubernetes_minor = "${var.kubernetes_minor}" } )
      "/cloud-init/meta-data" = file("http/cloud-init/meta-data")
   }
   iso_checksum     = "file:${var.iso_base_url}/SHA512SUMS"
@@ -61,7 +61,7 @@ source "qemu" "debian" {
   ssh_port         = 22
   ssh_timeout      = "5m"
   ssh_username     = "debian"
-  vm_name          = "${var.vm_name}"
+  vm_name          = "proxmox-k8s-${var.kubernetes_major}.${var.kubernetes_minor}.qcow2"
 }
 
 build {
