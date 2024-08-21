@@ -1,0 +1,45 @@
+{
+  "variables": {
+      "vm_name": "debian-12.6.0-amd64",
+      "numvcpus": "1",
+      "memsize": "1024",
+      "disk_size": "8192",
+      "iso_url": "https://cdimage.debian.org/cdimage/release/12.6.0/amd64/iso-cd/debian-12.6.0-amd64-netinst.iso",
+      "iso_checksum": "ade3a4acc465f59ca2496344aab72455945f3277a52afc5a2cae88cdc370fa12",
+      "ssh_username" : "packer",
+      "ssh_password" : "packer",
+      "boot_wait": "5s"
+    },
+    "builders": [
+      {
+        "type": "virtualbox-iso",
+        "boot_command": ["<esc><wait300ms>auto preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<enter>"],
+        "boot_wait": "{{ user `boot_wait` }}",
+        "disk_size": "{{ user `disk_size` }}",
+        "headless": false,
+        "guest_os_type": "Debian_64",
+        "http_directory": "http",
+        "iso_checksum": "{{ user `iso_checksum` }}",
+        "iso_url": "{{ user `iso_url` }}",
+        "shutdown_command": "echo 'packer'|sudo -S shutdown -P now",
+        "ssh_password": "{{ user `ssh_password` }}",
+        "ssh_port": 22,
+        "ssh_username": "{{ user `ssh_username` }}",
+        "ssh_timeout": "30m",
+        "vm_name": "{{ user `vm_name` }}",
+        "hard_drive_interface": "sata",
+        "vboxmanage": [
+          ["modifyvm", "{{.Name}}", "--memory", "{{ user `memsize` }}"],
+          ["modifyvm", "{{.Name}}", "--cpus", "{{ user `numvcpus` }}"],
+          ["storagectl", "{{.Name}}", "--name", "SATA Controller", "--hostiocache", "on"]
+        ]
+      }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo 'packer'|{{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "scripts": ["scripts/install.sh"]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+#packer build -debug -on-error=ask debian.pkr.hcl
+packer build -on-error=ask debian12.json
