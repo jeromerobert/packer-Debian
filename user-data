@@ -1,0 +1,329 @@
+#cloud-config
+
+bootcmd:
+  - apt-mark auto $(apt-mark showmanual)
+  - apt-mark manual cloud-init openssh-server file curl bind9-host iputils-ping vim netplan-generator unattended-upgrades grub-cloud-amd64 iproute2
+  - "sed -i 's/Components: main/Components main contrib/g' /etc/apt/mirrors/debian.list"
+  - "echo 'export PATH=$PATH:/snap/bin' >> /etc/skel/.bashrc"
+
+chpasswd:
+  users:
+  - { name: root, password: root, type: text }
+  - { name: debian, password: debian, type: text }
+  expire: False
+
+
+write_files:
+  - path: /etc/apt/mirrors/debian
+    content: http://deb.debian.org/debian
+  - path: /etc/profile.d/proxy.sh
+    content: |
+      export http_proxy=http://127.0.0.1:3128
+      export https_proxy=$http_proxy
+      export HTTP_PROXY=$http_proxy
+      export HTTPS_PROXY=$http_proxy
+  - path: /etc/apt/apt.conf.d/03proxy
+    content: Acquire::http::Proxy "http://192.168.56.1:3142";
+    #content: Acquire::http::Proxy "https://moria.2d36-aserislab.aws.cloud.airbus-v.corp:443";
+  - path: /etc/apt/apt.conf.d/02recommends
+    content: APT::Install-Recommends "false";
+  - path: /etc/apt/sources.list.d/unstable.list
+    content: deb http://deb.debian.org/debian unstable main contrib non-free non-free-firmware
+  #- path: /etc/dpkg/dpkg.cfg.d/unsafe-io
+  #  content: force-unsafe-io
+  - path: /etc/apt/preferences.d/unstable
+    content: |
+      Package: *
+      Pin: release a=testing
+      Pin-Priority: 900
+
+      Package: *
+      Pin: release a=unstable
+      Pin-Priority: 800
+
+      Package: *
+      Pin: release o=Debian
+      Pin-Priority: -10
+  - path: /etc/cntlm.conf
+    content: |
+      # Windows user name
+      Username    foo
+      Domain      EU
+      Proxy       10.126.240.5:3128
+      NoProxy	    localhost, 127.0.0.*, 10.*, 192.168.*
+      # cntlm -H -M http://www.google.fr
+      #PassNTLMv2 xxxx
+      # Or plain password
+      #Password secret
+      Listen     3128
+
+  - path: /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
+    content: |
+      <channel name="xfce4-panel" version="1.0">
+        <property name="configver" type="int" value="2"/>
+        <property name="panels" type="array">
+          <value type="int" value="1"/>
+          <property name="dark-mode" type="bool" value="true"/>
+          <property name="panel-1" type="empty">
+            <property name="position" type="string" value="p=2;x=1229;y=399"/>
+            <property name="length" type="double" value="100"/>
+            <property name="position-locked" type="bool" value="true"/>
+            <property name="icon-size" type="uint" value="16"/>
+            <property name="size" type="uint" value="26"/>
+            <property name="plugin-ids" type="array">
+              <value type="int" value="1"/>
+              <value type="int" value="4"/>
+              <value type="int" value="2"/>
+              <value type="int" value="3"/>
+              <value type="int" value="6"/>
+              <value type="int" value="11"/>
+              <value type="int" value="12"/>
+            </property>
+            <property name="mode" type="uint" value="2"/>
+          </property>
+        </property>
+        <property name="plugins" type="empty">
+          <property name="plugin-1" type="string" value="applicationsmenu">
+            <property name="show-menu-icons" type="bool" value="true"/>
+            <property name="show-button-title" type="bool" value="false"/>
+          </property>
+          <property name="plugin-2" type="string" value="tasklist">
+            <property name="grouping" type="bool" value="false"/>
+            <property name="show-labels" type="bool" value="false"/>
+            <property name="show-handle" type="bool" value="true"/>
+          </property>
+          <property name="plugin-3" type="string" value="separator">
+            <property name="expand" type="bool" value="true"/>
+            <property name="style" type="uint" value="0"/>
+          </property>
+          <property name="plugin-6" type="string" value="systray">
+            <property name="square-icons" type="bool" value="true"/>
+          </property>
+          <property name="plugin-11" type="string" value="separator">
+            <property name="style" type="uint" value="0"/>
+          </property>
+          <property name="plugin-12" type="string" value="clock">
+            <property name="mode" type="uint" value="2"/>
+            <property name="digital-layout" type="uint" value="3"/>
+            <property name="digital-time-format" type="string" value="%H:%M%n%S"/>
+            <property name="digital-time-font" type="string" value="Sans 6"/>
+          </property>
+          <property name="plugin-4" type="string" value="launcher">
+            <property name="items" type="array">
+              <value type="string" value="/var/lib/snapd/desktop/applications/code-insiders_code-insiders.desktop"/>
+            </property>
+          </property>
+        </property>
+      </channel>
+
+
+
+ca_certs:
+  trusted:
+    # Airbus S2 sigCA P01
+    - |
+      -----BEGIN CERTIFICATE-----
+      MIIImzCCBoOgAwIBAgITKwAAAASM7xwu6j4LsQAAAAAABDANBgkqhkiG9w0BAQsF
+      ADBWMQswCQYDVQQGEwJGUjEhMB8GA1UEChMYQWlyYnVzIE9wZXJhdGlvbnMgUy5B
+      LlMuMSQwIgYDVQQDExtBaXJidXMgUzIgSW50ZXJtZWRpYXRlIENBIDEwHhcNMTUx
+      MTEzMTM1MzUzWhcNMjgwNzI4MDAwMDAwWjBOMQswCQYDVQQGEwJGUjEhMB8GA1UE
+      ChMYQWlyYnVzIE9wZXJhdGlvbnMgUy5BLlMuMRwwGgYDVQQDExNBaXJidXMgUzIg
+      c2lnQ0EgUDAxMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA0UDouRD4
+      /rwDURZ+p/prqDjVrl3lP7RCve1rX8IErM3hmn32e9suMoG53WKdCmaQtBify0Ns
+      A/DCBJEd7bWMWYtTdqOzhiyeVex7q8o8QoGa4kPhyEbyiQuyoOayQnvFsxx2vahj
+      084AA3kiMn6xekW7ESRGcdHSJRskkZi4tyx1KG24rOfiSJXtupVlaqFNaV+viS3q
+      AqKiR9U1BFfq2659CAGIqJ8BTDpTatUjx1EGklgqTQzOqWahCqpC/uo/4UUCAeMF
+      fqdFtY8jywqS3O7z0nEPO1eCxheQ25npmD6YMV6zFnO25HOh/+ywYhkFYOoQPM0s
+      QfEZylQTyup2wSt+ygcKCv23pZaBhbRlpyi9kIG/aOGo1dqqvTTXwZa2u1NHksGM
+      1DeiG2xk0PrwnY7TJPwR1HTrBb8RDHgIOzCOWqVnQq6bgleaEsQN8RuzjfHAx9v3
+      wPQIDSjcivNR3VfH0DGY7Kl6albzCp9GPmoY48tD0fuoOYMyYOS0V9eEiLwcXdlk
+      9ncDLdRAG5wqRNpJ6syqdslujySYHAvFze9ZrRqbJ7cbx3fczyUUtXBCJ548ssCX
+      6LJ3bHixxjnuzithD3ZjFQ5ZxggdTMb//5okW0cXK4g1rfHUoi+DCVQdr+/Gyk6i
+      ni0SgN+Xfo8BmXqV+mx0oMmLa+GCjM75nTsCAwEAAaOCA2gwggNkMA4GA1UdDwEB
+      /wQEAwIBxjAdBgNVHQ4EFgQU7KvQH7IbFu0deq9sKdOe1VMxTUYwgdUGA1UdIASB
+      zTCByjBjBgsrBgEEAf8wAwYCATBUMFIGCCsGAQUFBwIBFkZodHRwOi8vcHVibGlj
+      YXRpb24uY2VydGlmaWNhdGVzZXJ2aWNlcy5lYWRzLmNvbS9FQURTQ2VydGlmaWNh
+      dGVQb2xpY3kAMGMGCysGAQQB/zADBgICMFQwUgYIKwYBBQUHAgEWRmh0dHA6Ly9w
+      dWJsaWNhdGlvbi5jZXJ0aWZpY2F0ZXNlcnZpY2VzLmVhZHMuY29tL0VBRFNDZXJ0
+      aWZpY2F0ZVBvbGljeQAwEgYDVR0TAQH/BAgwBgEB/wIBADAfBgNVHSMEGDAWgBQo
+      GKVkYNPIbwCz/V387KzJ4WbfjzCB/AYDVR0fBIH0MIHxMIHuoIHroIHohlJodHRw
+      Oi8vcHVibGljYXRpb24uY2VydGlmaWNhdGVzZXJ2aWNlcy5lYWRzLmNvbS9BUkwv
+      QWlyYnVzLVMyLUludGVybWVkaWF0ZS1DQTEuY3JshkxodHRwOi8vcHVibGljYXRp
+      b24uY2VudHJhbC5wa2kuaW50cmEuY29ycC9BUkwvQWlyYnVzLVMyLUludGVybWVk
+      aWF0ZS1DQTEuY3JshkRodHRwOi8vcGtpcHVibGljYXRpb24uYWlyYnVzLmNvcnAv
+      QVJML0FpcmJ1cy1TMi1JbnRlcm1lZGlhdGUtQ0ExLmNybDCCASUGCCsGAQUFBwEB
+      BIIBFzCCARMwYgYIKwYBBQUHMAKGVmh0dHA6Ly9wdWJsaWNhdGlvbi5jZXJ0aWZp
+      Y2F0ZXNlcnZpY2VzLmVhZHMuY29tL0NBQ2VydHMvQWlyYnVzLVMyLUludGVybWVk
+      aWF0ZS1DQTEuY2VyMFwGCCsGAQUFBzAChlBodHRwOi8vcHVibGljYXRpb24uY2Vu
+      dHJhbC5wa2kuaW50cmEuY29ycC9DQUNlcnRzL0FpcmJ1cy1TMi1JbnRlcm1lZGlh
+      dGUtQ0ExLmNlcjBPBggrBgEFBQcwAoZDaHR0cDovL3BraXB1YmxpY2F0aW9uLmFp
+      cmJ1cy5jb3JwL0NBL0FpcmJ1cy1TMi1JbnRlcm1lZGlhdGUtQ0ExLmNlcjANBgkq
+      hkiG9w0BAQsFAAOCAgEAHezbj4gUPkfL3IOnn+foALI/48/K+e4QNgL1Vz1yT6un
+      1sCyY7Z9NShTZeRyLScil8CD919QrimdOKcvGo3ACl2gt5VcIaqKoP1knUwvsxZ/
+      KVHsBHGc9jCHI+irpz9Q08UyqCKucL+pmQtJT36IAJ0F+FjUTP2PizYJTUbRKD1w
+      pZ7/v4ait4qreO8f0L0AtjfxzZJC/KxPFuODfXlBSCF1xJff9/RqVXiPZkm6w6xq
+      G0WollKowLeN9Fq91RoyNg0j6/Me0v173kXMKz4is3suTXYGRksKPm4yM/oFG7dt
+      MRdDrXsz0vgm/eMVMfLqiybZgwjemDzYz2eCjRlLVD0eRT0Pumpg4+bKOHp3SZcN
+      NrR/qx4MU6Ea8CeikoKHIJq/byLHfh/ii2nkCAK4qIjRa4Prch5ZOvCd/51hIUxk
+      cdEEstBB8nZNXBAD2mNHyoq8v+AoZ3nLWz/B1cBYuPVcEVl1tSSYBcpLJTe4uhW3
+      UwLr0XcgKzU+rCnLZ8uoU/gmxysF7UOrhI60suxTaL7g5oQtRPxzYrgHrtEq6beb
+      wFDuDeGxNwssFWHDuj+pLxUq6BFAKBeFZ/jcbgo1LUP6weyRB/cbk6EdowhYxgyt
+      SgIRQvqnEsGteMpCo3e62A0TuswzzAIYSudWY66yGbn6tDhHXh9t4KfBYou4DqY=
+      -----END CERTIFICATE-----
+
+    # Airbus S2 Intermediate CA 1
+    - |
+      -----BEGIN CERTIFICATE-----
+      MIILBjCCCO6gAwIBAgISESAusBsEdPO2leCPAjZhHPiHMA0GCSqGSIb3DQEBCwUA
+      MGExCzAJBgNVBAYTAkRFMTYwNAYDVQQKDC1FdXJvcGVhbiBBZXJvbmF1dGljIERl
+      ZmVuY2UgYW5kIFNwYWNlIENvbXBhbnkxGjAYBgNVBAMMEUVBRFMgUzIgUm9vdCBD
+      QSAxMB4XDTE1MDcyODAwMDAwMFoXDTI4MDcyODAwMDAwMFowVjELMAkGA1UEBhMC
+      RlIxITAfBgNVBAoTGEFpcmJ1cyBPcGVyYXRpb25zIFMuQS5TLjEkMCIGA1UEAxMb
+      QWlyYnVzIFMyIEludGVybWVkaWF0ZSBDQSAxMIICIjANBgkqhkiG9w0BAQEFAAOC
+      Ag8AMIICCgKCAgEAtQiEK1ip/9qlm9VlIgkN45SVV3vkPr0q9Idk9F42R20WcRq8
+      HRiNzFu3xaQ5GxMxCk25y7n9XBRhdXZdkivHL7V1byYfPyGI2auGCjp939i0AG7Y
+      wZKdfeUPB8iq8kcbwdhigeaAAXx7B5aGfoWCDVoNA51M27I1e8YkJMtnSVNXy3hr
+      eLkspbUiNbyxFBVZyOh73RnTAHtfBWzojnP4ykNx6zMTJGb/xgpBQcc5T5voFWlq
+      9dHvOnk70SzLoMnAUkvjGVG2fdW5zVh9Wh8mHQfT+ciqrdAAxVfIHeOd+sArd98W
+      mkkYphs36AD7ZWTRn4yg9jEr4RrjZ8XrIaFMFXeOqG4u3hqllVmTcJwwBqbvFKo2
+      TP8kauA/JxnqExAvBOhM3OJ4cFam0MJiiph1TtE7Al6cfADt6LDNNrgGNBlDG7KU
+      SunA3r/gm+gNR0nFh13+NhHgIgsVa9dmDnrqVmjwcha6W4VtjJhwl0YCjRKdo7qy
+      Knmeu6Q2reVrr4DdRZjznBro6kjbWA/r1Vp7+moZBB8UTu6gYhPLLVLB6JYOv5R8
+      ZoTH0iJHCYExk0vbBwcgXikI+IlhNEmLyNsTtI4YdDwhgaV8E6HDht91v2n+Cqhl
+      kbaGNC707Zjqr0FmCh5vKSByeMORrbV1A9cQf0fWg9QdOh7p11kxseFRz5cCAwEA
+      AaOCBcEwggW9MA4GA1UdDwEB/wQEAwIBxjCB0wYDVR0gBIHLMIHIMGIGCysGAQQB
+      /zADBgIBMFMwUQYIKwYBBQUHAgEWRWh0dHA6Ly9wdWJsaWNhdGlvbi5jZXJ0aWZp
+      Y2F0ZXNlcnZpY2VzLmVhZHMuY29tL0VBRFNDZXJ0aWZpY2F0ZVBvbGljeTBiBgsr
+      BgEEAf8wAwYCAjBTMFEGCCsGAQUFBwIBFkVodHRwOi8vcHVibGljYXRpb24uY2Vy
+      dGlmaWNhdGVzZXJ2aWNlcy5lYWRzLmNvbS9FQURTQ2VydGlmaWNhdGVQb2xpY3kw
+      EgYDVR0TAQH/BAgwBgEB/wIBATCCAjkGA1UdHwSCAjAwggIsMEugSaBHhkVodHRw
+      Oi8vcHVibGljYXRpb24uY2VydGlmaWNhdGVzZXJ2aWNlcy5lYWRzLmNvbS9BUkwv
+      RUFEU1MyUm9vdENBMS5jcmwwRaBDoEGGP2h0dHA6Ly9wdWJsaWNhdGlvbi5jZW50
+      cmFsLnBraS5pbnRyYS5jb3JwL0FSTC9FQURTUzJSb290Q0ExLmNybDCBzKCByaCB
+      xoaBw2xkYXA6Ly9wdWJsaWNhdGlvbi5jZXJ0aWZpY2F0ZXNlcnZpY2VzLmVhZHMu
+      Y29tL0NOPUVBRFMlMjBTMiUyMFJvb3QlMjBDQSUyMDEsTz1FdXJvcGVhbiUyMEFl
+      cm9uYXV0aWMlMjBEZWZlbmNlJTIwYW5kJTIwU3BhY2UlMjBDb21wYW55LEM9REU/
+      Y2VydGlmaWNhdGVSZXZvY2F0aW9uTGlzdDtiaW5hcnk/YmFzZT9vYmplY3RjbGFz
+      cz1wa2lDQTCBxqCBw6CBwIaBvWxkYXA6Ly9wdWJsaWNhdGlvbi5jZW50cmFsLnBr
+      aS5pbnRyYS5jb3JwL0NOPUVBRFMlMjBTMiUyMFJvb3QlMjBDQSUyMDEsTz1FdXJv
+      cGVhbiUyMEFlcm9uYXV0aWMlMjBEZWZlbmNlJTIwYW5kJTIwU3BhY2UlMjBDb21w
+      YW55LEM9REU/Y2VydGlmaWNhdGVSZXZvY2F0aW9uTGlzdDtiaW5hcnk/YmFzZT9v
+      YmplY3RjbGFzcz1wa2lDQTCCAkIGCCsGAQUFBwEBBIICNDCCAjAwVQYIKwYBBQUH
+      MAKGSWh0dHA6Ly9wdWJsaWNhdGlvbi5jZXJ0aWZpY2F0ZXNlcnZpY2VzLmVhZHMu
+      Y29tL0NBY2VydHMvRUFEU1MyUm9vdENBMS5wN2MwTwYIKwYBBQUHMAKGQ2h0dHA6
+      Ly9wdWJsaWNhdGlvbi5jZW50cmFsLnBraS5pbnRyYS5jb3JwL0NBY2VydHMvRUFE
+      U1MyUm9vdENBMS5wN2MwgcQGCCsGAQUFBzAChoG3bGRhcDovL3B1YmxpY2F0aW9u
+      LmNlcnRpZmljYXRlc2VydmljZXMuZWFkcy5jb20vQ049RUFEUyUyMFMyJTIwUm9v
+      dCUyMENBJTIwMSxPPUV1cm9wZWFuJTIwQWVyb25hdXRpYyUyMERlZmVuY2UlMjBh
+      bmQlMjBTcGFjZSUyMENvbXBhbnksQz1ERT9jQUNlcnRpZmljYXRlO2JpbmFyeT9i
+      YXNlP29iamVjdGNsYXNzPXBraUNBMIG+BggrBgEFBQcwAoaBsWxkYXA6Ly9wdWJs
+      aWNhdGlvbi5jZW50cmFsLnBraS5pbnRyYS5jb3JwL0NOPUVBRFMlMjBTMiUyMFJv
+      b3QlMjBDQSUyMDEsTz1FdXJvcGVhbiUyMEFlcm9uYXV0aWMlMjBEZWZlbmNlJTIw
+      YW5kJTIwU3BhY2UlMjBDb21wYW55LEM9REU/Y0FDZXJ0aWZpY2F0ZTtiaW5hcnk/
+      YmFzZT9vYmplY3RjbGFzcz1wa2lDQTAdBgNVHQ4EFgQUKBilZGDTyG8As/1d/Oys
+      yeFm348wHwYDVR0jBBgwFoAUs7Y6a21+K1CGtgcN+tC0yQ4GTwswDQYJKoZIhvcN
+      AQELBQADggIBAIg1k37rZjx9Rh+Tbn+RwmGdjIyyUNFa/eebO9+moq1XAG9QPbEW
+      aUQlW/lQJ3uIhpBLBQOUH7EdRB7JMBj8aBObD/bKasBMpgfDR1OAWJIS589IWPc7
+      pUMY7RVCfcOBMtC2PMJwIbCRdcmDbLT2oOP625Lif9kTqFfAqMxNKNVG7nr356B6
+      fB9r/WnlUbjvr5gP8TSSE0vtgud6PBDbNqZaDZgaJwHnu9WoQzRPOsNUM6cRqaU9
+      OEx3dy8hcAGOUqQ9zUnEBnd7+L7jhh4aLcrKHRLrFu3shvIsPY8bdfm+LYSDqsxz
+      Gw7FlCk+mV9nnayk2ODbSm/eMG52O9LJt0RC1+pbpMhwhd6TsY0y1F9n1jHCJpQv
+      sbRNdznDK9zq44jDHInAXwEN4XWxC7CszZ/yfWBDMH4hoTlh797msmOuY9NiDMET
+      A7gObINw/w3OL3OyGqRG9VHYprg0KH02NCrxK7su8NJhKEPYEarw2NVWhmjYfHwh
+      yqmxiaMKtA/gmifmYHXUekwEs9dxA4np554LIoM9Y2apepvGlkInYiebc1djD2KK
+      t81snd6WPuEh4/imUyhrTdLZUNRBsqtY3IXRQrLqdiBzVMYW+ebWInQFmGqcukX0
+      EETzi5ZdfWnb4qpA/bIDaA0i1vJIXv998o6iU7Jf2B1nt/EeYKQamHB1
+      -----END CERTIFICATE-----
+    # Airbus_SSL_VA_Root_CA
+    - |
+      -----BEGIN CERTIFICATE-----
+      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
+      QX9O
+      -----END CERTIFICATE-----
+    # EADSS2RootCA1
+    - |
+      -----BEGIN CERTIFICATE-----
+      MIIFsTCCA5mgAwIBAgISESAAlGGhjxfwdSKJXp73vMOWMA0GCSqGSIb3DQEBCwUA
+      MGExCzAJBgNVBAYTAkRFMTYwNAYDVQQKDC1FdXJvcGVhbiBBZXJvbmF1dGljIERl
+      ZmVuY2UgYW5kIFNwYWNlIENvbXBhbnkxGjAYBgNVBAMMEUVBRFMgUzIgUm9vdCBD
+      QSAxMB4XDTEzMDcxMTAwMDAwMFoXDTMzMDcxMTAwMDAwMFowYTELMAkGA1UEBhMC
+      REUxNjA0BgNVBAoMLUV1cm9wZWFuIEFlcm9uYXV0aWMgRGVmZW5jZSBhbmQgU3Bh
+      Y2UgQ29tcGFueTEaMBgGA1UEAwwRRUFEUyBTMiBSb290IENBIDEwggIiMA0GCSqG
+      SIb3DQEBAQUAA4ICDwAwggIKAoICAQDsbCZ7qQhx33dHXGnL8EkRy+TFYzlFlX1a
+      WALZF2yEanDjMVmw6KrywmaXmh838/1Rb/7Nfu2B3izY5u9tj+nvmYAzHxQV5ZGA
+      Gg+IBOnulSQbvY9lZqTuv9Ld35RlOOlcGixbzcaMxvaE+KvTEleHiDG4UYpQph3a
+      mG4TM0pfozWY2AtKrzrWryvgIywCrf/N7daVegfHiWvvVMsgHOgnKhrR+YR8rcUF
+      n3pJmp4FCGw+ETE1O1l5dCx6gt8TpQXMJs9ZJvzt9IFCV+tOKMhHlsiKsKAH270Z
+      Y7fx+slrm/XXkAHCg5BiGV9X/hqyE6nm9t+lkZxS8xwv1u1FpEk3TWQ30oXMnXoj
+      eAk2iuKARg15IPPEkWoK8xWiS76Ys+IDFupntpCFiyqzpKno9ANP3c++pimrhYZ/
+      453/7cDVgxsvW6Pmkxt7rdiJhfYVhEi3JAbbZlfIZiW4880uvT4Qdekd3a3sALNd
+      08Fww4zzYDamId9ghWbeen8M5M/IdhGcX1MzoGChFRHwuMGEova7oBnGyIwFpcO/
+      m1SIRjWug6HX359IRAYstKYv0CR9xpahRovIpktpKvceEnzZm9mIdQ3TnsIONZ2+
+      hcbVQkah0ui95a29vaYLKzQATxjbKYgzl76VXbhnQq4eRaaYOKLcjru0vbZqg9vt
+      Wv9CMS/0mQIDAQABo2MwYTAOBgNVHQ8BAf8EBAMCAcYwDwYDVR0TAQH/BAUwAwEB
+      /zAdBgNVHQ4EFgQUs7Y6a21+K1CGtgcN+tC0yQ4GTwswHwYDVR0jBBgwFoAUs7Y6
+      a21+K1CGtgcN+tC0yQ4GTwswDQYJKoZIhvcNAQELBQADggIBAJx7VQpMFHsveThb
+      I9QQ1iCYQPlI9hqCKjvVLS7Yd4hE1h4wvqbZwenb3fhwOQ+5N1shyJum8P7U/Er/
+      hoP4kBnrT4lty1hwx82c3W+ssTy7shBXkdW1HLbEwhWWsi5lZqV8RtWrqPDGjeyU
+      JGCV0773Avfd0DBIwHT5sNNr4G701YZhNdw/Z5SgPvkPVMERk8Fk2t52a8VbRF88
+      RDhLEuOwxCVpLYARbEgXaKkhMBl7n7gkl/uUaQ3AgXyNutEg73c6OrdPyCBKiZoj
+      1FQ2R4eju6OFOcUw/KMR9F+Cz9IMQOOXbtnBgUYwPaE4Mq0o6LN7UYrLOV6IsdKS
+      ddCbMYeI2sKmivdWly/tnMz6f8o5hiiM9WPHJrKTKbQTrAyGPnZE6eRHqqiLEuav
+      NhXCQZzgv1qIQcpjHaLCawObY5h6h4nhNk2tB3s/9Imc0QG0azfD2Lkz9Bf7NfIz
+      Mtt5DvB/T+q2HUKaW6iw6QOdHLmvXHTD7pqkkqGGh8+avvG2FCYJwguOhTIVw9xT
+      Z5kylpD7huAWczxsAnb+OJDesrliqYw7iaiANiLeKETS7IL+w9bH8Kxjdq0RPpHX
+      bfcSOXXv022ktYJKqcUOQMCpqY9Q2vePeGjPO3b3LRw3bVbZzlxuDRSGPtqB7bPw
+      xORaCVWVl937AXZrms7nJ65JNIAb
+      -----END CERTIFICATE-----
+
+
+runcmd:
+  - export DEBIAN_FRONTEND=noninteractive
+  - apt-get update
+  - apt-get install -y eatmydata
+  - eatmydata apt-get install -y console-setup virtualbox-guest-utils
+  - sed -i 's/XKBLAYOUT=.*/XKBLAYOUT="fr"/g' /etc/default/keyboard
+  - setupcon -k -f
+  - eatmydata apt-get install -y virtualbox-guest-utils virtualbox-guest-x11 xserver-xorg-video-vmware lightdm
+    xserver-xorg-input-libinput xfce4-session xfce4-panel xfwm4 snapd xfce4-terminal iotop strace cntlm chromium
+    synaptic zerofree gnome-keyring
+  - udevadm trigger --subsystem-match=input --action=change
+  - sed -i 's/#autologin-user=/autologin-user=debian/g' /etc/lightdm/lightdm.conf
+  - chmod 666 /dev/vboxuser
+  - snap set system proxy.http="http://127.0.0.1:3128"
+  - snap set system proxy.https="http://127.0.0.1:3128"
+  # Use system certificates in Chromium
+  - (cd /usr/lib/x86_64-linux-gnu && rm libnssckbi.so && ln -s pkcs11/p11-kit-trust.so libnssckbi.so)
+  - systemctl enable --now lightdm
+
+
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHqPat4D6t7MsnOhnfF0tTfhq6uKGFACxfJ0m1dh7bWh
