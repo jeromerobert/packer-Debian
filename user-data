@@ -1,10 +1,11 @@
 #cloud-config
 
 bootcmd:
-  - apt-mark auto $(apt-mark showmanual)
-  - apt-mark manual cloud-init openssh-server file curl bind9-host iputils-ping vim netplan-generator unattended-upgrades grub-cloud-amd64 iproute2
-  - "sed -i 's/Components: main/Components main contrib/g' /etc/apt/mirrors/debian.list"
-  - "echo 'export PATH=$PATH:/snap/bin' >> /etc/skel/.bashrc"
+  - cloud-init-per once apt-mark-auto apt-mark auto $(apt-mark showmanual)
+  - cloud-init-per once apt-mark-manual apt-mark manual cloud-init openssh-server file curl bind9-host
+    iputils-ping vim netplan-generator unattended-upgrades grub-cloud-amd64 iproute2
+  - [ cloud-init-per, once, apt-contrib, sed, -i, "s/Components: main/Components main contrib/g", /etc/apt/mirrors/debian.list ]
+  - [ cloud-init-per, once, snap-bin, sh, -c, "echo 'export PATH=$PATH:/snap/bin' >> /etc/skel/.bashrc" ]
 
 chpasswd:
   users:
@@ -306,6 +307,9 @@ ca_certs:
 
 
 runcmd:
+  - movetmp() { mkdir -p /mnt/tmp/$1/ && mv /$1/* /mnt/tmp/$1/ ; echo /mnt/tmp/$1 /$1 none defaults,bind 0 0 >> /etc/fstab && mount /$1; }
+  - for f in tmp var/cache var/tmp var/lib/apt/lists; do movetmp $f; done
+  - chmod 1777 /mnt/tmp/var/tmp /mnt/tmp/tmp
   - export DEBIAN_FRONTEND=noninteractive
   - apt-get update
   - apt-get install -y eatmydata
@@ -323,6 +327,20 @@ runcmd:
   # Use system certificates in Chromium
   - (cd /usr/lib/x86_64-linux-gnu && rm libnssckbi.so && ln -s pkcs11/p11-kit-trust.so libnssckbi.so)
   - systemctl enable --now lightdm
+
+
+device_aliases: {home: /dev/sdb, tmp: /dev/sdc}
+disk_setup:
+  tmp: { layout: [25, 75] }
+
+fs_setup:
+- {device: home, partition: none, filesystem: ext4, label: home}
+- {device: tmp.1, filesystem: swap, label: swap}
+- {device: tmp.2, filesystem: ext4, label: tmp}
+mounts:
+- [home, /home]
+- [tmp.1, none, swap, sw, '0', '0']
+- [tmp.2, /mnt/tmp]
 
 
 ssh_authorized_keys:
